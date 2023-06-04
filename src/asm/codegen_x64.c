@@ -10,7 +10,7 @@
 #define NOT_FOUND 0xDEADBEEF
 #define DECLABEL_END_FUNCTION -1
 
-struct __attribute__((packed)) fill_in_jmp_label {
+struct fill_in_jmp_label {
     struct fill_in_jmp_label *next;
 
     size_t cur_size;
@@ -19,7 +19,7 @@ struct __attribute__((packed)) fill_in_jmp_label {
     size_t instuction_len;
 };
 
-struct __attribute__((packed)) label {
+struct label {
     struct label *next;
 
     size_t id;
@@ -100,6 +100,23 @@ static void overwrite_assembler(struct vscc_asm_context *asmh, int dst_idx, void
             memcpy(&ins->buffer[dst_idx - current_idx], src, length);
         }
         current_idx += ins->length;
+    }
+}
+
+static void fill_in_fill_ins(struct fill_in_jmp_label **fill_in, struct label *label_map, struct vscc_asm_context *assembler, size_t id)
+{
+    for (struct fill_in_jmp_label *fill = *fill_in; fill;) {
+        if (fill->id == id) {
+            int offset = codegen_get_jump_offset(assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
+            overwrite_assembler(assembler, fill->idx, &offset, sizeof(offset));
+
+            struct fill_in_jmp_label *next = fill->next;
+            vscc_list_free_element((void**)fill_in, 0, equals, fill);
+            fill = next;
+        }
+        else {
+            fill = fill->next;
+        }
     }
 }
 
@@ -380,24 +397,6 @@ static void symbol_generate_global(struct vscc_symbol **root, struct vscc_regist
     strcat(symbol->symbol_name, _str_temp);
 
     symbol->offset = offset;
-}
-
-static void fill_in_fill_ins(struct fill_in_jmp_label **fill_in, struct label *label_map, struct vscc_asm_context *assembler, size_t id)
-{
-    void *removed = NULL;
-    for (struct fill_in_jmp_label *fill = *fill_in; fill;) {
-        if (fill->id == id) {
-            int offset = codegen_get_jump_offset(assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
-            overwrite_assembler(assembler, fill->idx, &offset, sizeof(offset));
-
-            struct fill_in_jmp_label *next = fill->next;
-            vscc_list_free_element((void**)fill_in, 0, equals, fill);
-            fill = next;
-        }
-        else {
-            fill = fill->next;
-        }
-    }
 }
 
 void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *out, bool generate_symbols)
