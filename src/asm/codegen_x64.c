@@ -8,8 +8,9 @@
 #include <string.h>
 
 #define NOT_FOUND 0xDEADBEEF
+#define DECLABEL_END_FUNCTION -1
 
-struct fill_in_jmp_label {
+struct __attribute__((packed)) fill_in_jmp_label {
     struct fill_in_jmp_label *next;
 
     size_t cur_size;
@@ -18,11 +19,12 @@ struct fill_in_jmp_label {
     size_t instuction_len;
 };
 
-struct label {
+struct __attribute__((packed)) label {
     struct label *next;
 
     size_t id;
     uintptr_t address;
+    bool is_function;
 };
 
 /*
@@ -34,6 +36,17 @@ static const int argc_to_reg[] = {
     REG_DX,
     REG_CX
 };
+
+static bool equals(void *a, void *b)
+{
+    return a == b;
+}
+
+static bool equals_label(void *a, void *b)
+{
+    struct label *x = a;
+    return !x->is_function;
+}
 
 static size_t codegen_get_size_of_assembly(struct vscc_asm_context *ctx)
 {
@@ -55,12 +68,13 @@ static uintptr_t access_label_map(struct label *label_map, size_t id)
     return NOT_FOUND;
 }
 
-static void push_label_map(struct label **label_map, size_t id, uintptr_t address)
+static void push_label_map(struct label **label_map, size_t id, uintptr_t address, bool is_function)
 {
     struct label *label = vscc_list_alloc((void**)label_map, 0, sizeof(struct label));
 
     label->id = id;
     label->address = address;
+    label->is_function = is_function;
 }
 
 static void push_fill_in(struct fill_in_jmp_label **fill_in, size_t cur_size, size_t id, uintptr_t idx, size_t ins_len)
@@ -368,6 +382,24 @@ static void symbol_generate_global(struct vscc_symbol **root, struct vscc_regist
     symbol->offset = offset;
 }
 
+static void fill_in_fill_ins(struct fill_in_jmp_label **fill_in, struct label *label_map, struct vscc_asm_context *assembler, size_t id)
+{
+    void *removed = NULL;
+    for (struct fill_in_jmp_label *fill = *fill_in; fill;) {
+        if (fill->id == id) {
+            int offset = codegen_get_jump_offset(assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
+            overwrite_assembler(assembler, fill->idx, &offset, sizeof(offset));
+
+            struct fill_in_jmp_label *next = fill->next;
+            vscc_list_free_element((void**)fill_in, 0, equals, fill);
+            fill = next;
+        }
+        else {
+            fill = fill->next;
+        }
+    }
+}
+
 void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *out, bool generate_symbols)
 {
     struct vscc_asm_context assembler = { 0 };
@@ -381,17 +413,12 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
         if (unlikely(generate_symbols))
             symbol_generate_function(&out->symbols, function, codegen_get_size_of_assembly(&assembler));
 
-        push_label_map(&label_map, (size_t)function, codegen_get_size_of_assembly(&assembler));
+        push_label_map(&label_map, (size_t)function, codegen_get_size_of_assembly(&assembler), true);
         assembler.argc = 0;
         
         /* check for any labels that can be filled with the proper relative offsets */
         /* to-do: clear when found? */
-        for (struct fill_in_jmp_label *fill = fill_in; fill; fill = fill->next) {
-            if (fill->id == (size_t)function) {
-                int offset = codegen_get_jump_offset(&assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
-                overwrite_assembler(&assembler, fill->idx, &offset, sizeof(offset));
-            }
-        }
+        fill_in_fill_ins(&fill_in, label_map, &assembler, (size_t)function);
 
         /* register allocation */
         size_t stack_allocation_size = 0;
@@ -444,7 +471,11 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
                 codegen_sub(&assembler, instruction); 
                 break;
             case O_RET: 
-                codegen_ret(&assembler, instruction); 
+                codegen_ret(&assembler, instruction);
+                if (unlikely(instruction->next_instruction != NULL)) {
+                    vscc_asm_encode(&assembler, REX_NONE, 2, ENCODE_I8(ASM_JMP), ENCODE_I32(0));
+                    push_fill_in(&fill_in, codegen_get_size_of_assembly(&assembler) - 6, DECLABEL_END_FUNCTION, codegen_get_size_of_assembly(&assembler) - 4, 6);
+                }
                 break;
             case O_PSHARG: 
             case O_SYSCALL_PSHARG: 
@@ -461,13 +492,8 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
                 break;
 
             case O_DECLABEL:
-                push_label_map(&label_map, instruction->imm1, codegen_get_size_of_assembly(&assembler));
-                for (struct fill_in_jmp_label *fill = fill_in; fill; fill = fill->next) {
-                    if (fill->id == instruction->imm1) {
-                        int offset = codegen_get_jump_offset(&assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
-                        overwrite_assembler(&assembler, fill->idx, &offset, sizeof(offset));
-                    }
-                }
+                push_label_map(&label_map, instruction->imm1, codegen_get_size_of_assembly(&assembler), false);
+                fill_in_fill_ins(&fill_in, label_map, &assembler, instruction->imm1);
                 break;
 
             /* 
@@ -510,12 +536,19 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
             }
         }
 
+        /*
+         * to-do: maybe determine ret count and decide whether these two lines require execution
+         */
+        push_label_map(&label_map, DECLABEL_END_FUNCTION, codegen_get_size_of_assembly(&assembler), false);
+        fill_in_fill_ins(&fill_in, label_map, &assembler, DECLABEL_END_FUNCTION);
+
         if (likely(function->register_stream != NULL)) {
             vscc_asm_encode(&assembler, REX_W, 3, ENCODE_I8(0x83), ENCODE_I8(0xC4), ENCODE_I8(stack_allocation_size)); /* add rsp, ... */
             vscc_x64_pop_rbp(&assembler);
         }
 
         vscc_x64_ret(&assembler);
+        vscc_list_free_element((void**)&label_map, 0, equals_label, NULL);
     }
 
     /* global registers */
@@ -526,18 +559,12 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
             if (unlikely(generate_symbols))
                 symbol_generate_global(&out->symbols, reg, offs);
 
-            push_label_map(&label_map, (size_t)reg, offs);
+            push_label_map(&label_map, (size_t)reg, offs, false);
             offs += reg->size;
         }
 
-        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next_register) {
-            for (struct fill_in_jmp_label *fill = fill_in; fill; fill = fill->next) {
-                if (fill->id == (size_t)reg) {
-                    int offset = codegen_get_jump_offset(&assembler, label_map, fill->id, fill->instuction_len, true, fill->cur_size);
-                    overwrite_assembler(&assembler, fill->idx, &offset, sizeof(offset));
-                }
-            }
-        }
+        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next_register)
+            fill_in_fill_ins(&fill_in, label_map, &assembler, (size_t)reg);
     }
 
     /* write compiled code to output */
