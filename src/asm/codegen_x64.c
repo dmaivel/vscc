@@ -528,6 +528,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
                     push_fill_in(&fill_in, codegen_get_size_of_assembly(&assembler) - 5, instruction->imm1, codegen_get_size_of_assembly(&assembler) - 4, 5);
                 if (instruction->reg1 != NULL && ((struct vscc_function*)instruction->imm1)->return_size != 0)
                     vscc_x64_ptr_reg(&assembler, REX_W, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | RM_BP | REG_AX, 0x100 - instruction->reg1->stackpos);
+                assembler.argc = 0;
                 break;
 
             default:
