@@ -38,12 +38,10 @@ void vscc_list_free_element(void **root, size_t next_offset, vscc_match_fn match
         void *next = *(void**)(elem + next_offset);
 
         if (matcher(elem, data)) {
-            void *next = *(void**)(elem + next_offset);
-
             /*
              * check if element is first, otherwise doesn't matter
              */
-            if (elem == *root)
+            if (prev == NULL)
                 *root = next;
             else
                 *(void**)(prev + next_offset) = next;
