@@ -126,6 +126,13 @@ struct vscc_syscall_args syscall_write = {
     .type = { M_IMM, M_REG, M_REG }
 };
 ```
+### saving/loading context
+```c
+bool status;
+
+status = vscc_ir_save(&ctx, "/path/to/save.vscc", false); /* only false supported */
+status = vscc_ir_load(&ctx, "/path/to/save.vscc", false);
+```
 
 ## code generation
 ### context initialization
