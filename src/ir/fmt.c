@@ -120,7 +120,6 @@ char *vscc_ir_str(struct vscc_context *ctx, size_t max_strlen)
 
 bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src)
 {
-    static uint64_t zero = 0;
     if (is_src)
         assert(false && "cannot save ir as source");
     
@@ -167,12 +166,18 @@ bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src)
     }
 
     /*
-     * start writing function data
+     * function name header
      */
     for (struct vscc_function *fn = ctx->function_stream; fn; fn = fn->next) {
         size_t len = strlen(fn->symbol_name);
         fwrite(&len, sizeof(uint8_t), 1, f);
         fwrite(fn->symbol_name, len, 1, f);
+    }
+
+    /*
+     * start writing function data
+     */
+    for (struct vscc_function *fn = ctx->function_stream; fn; fn = fn->next) {
         fwrite(&fn->instruction_count, sizeof(uint16_t), 1, f);
         fwrite(&fn->register_count, sizeof(uint16_t), 1, f);
         fwrite(&fn->return_size, sizeof(uint8_t), 1, f);
@@ -211,7 +216,13 @@ bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src)
                 fwrite(in->reg2->symbol_name, len, 1, f);
             }
 
-            fwrite(&in->imm1, sizeof(in->imm1), 1, f);
+            if (in->opcode != O_CALL)
+                fwrite(&in->imm1, sizeof(in->imm1), 1, f);
+            else {
+                size_t len = strlen(((struct vscc_function*)in->imm1)->symbol_name);
+                fwrite(&len, sizeof(uint8_t), 1, f);
+                fwrite(((struct vscc_function*)in->imm1)->symbol_name, len, 1, f);
+            }
             fwrite(&in->imm2, sizeof(in->imm2), 1, f);
         }
     }
@@ -237,8 +248,108 @@ bool vscc_ir_load(struct vscc_context *ctx, char *path, bool is_src)
     assert(magic == VSCC_IR_FMT_MAGIC);
 
     /*
-     * to-do: implement
+     * determine function count & global register counts
      */
+    int fcount = 0;
+    int gcount = 0;
+
+    fread(&fcount, sizeof(uint16_t), 1, f);
+    fread(&gcount, sizeof(uint16_t), 1, f);
+
+    /*
+     * global register data
+     */
+    for (int i = 0; i < gcount; i++) {
+        struct vscc_register *rg = vscc_alloc_global(ctx, "", 0, false);
+
+        size_t len = 0;
+        fread(&len, sizeof(uint8_t), 1, f);
+        fread(rg->symbol_name, len, 1, f);
+        fread(&rg->size, sizeof(uint8_t), 1, f);
+        fread(&rg->is_volatile, sizeof(uint8_t), 1, f);
+    }
+
+    /*
+     * function name header
+     */
+    for (int i = 0; i < fcount; i++) {
+        struct vscc_function *fn = vscc_init_function(ctx, "", 0);
+
+        size_t len = 0;
+        fread(&len, sizeof(uint8_t), 1, f);
+        fread(fn->symbol_name, len, 1, f);
+    }
+
+    /*
+     * function data
+     */
+    struct vscc_function *fn = ctx->function_stream;
+    for (int i = 0; i < fcount; i++) {
+        fread(&fn->instruction_count, sizeof(uint16_t), 1, f);
+        fread(&fn->register_count, sizeof(uint16_t), 1, f);
+        fread(&fn->return_size, sizeof(uint8_t), 1, f);
+
+        int k = 0;
+        for (int j = 0; j < fn->register_count; j++) {
+            struct vscc_register *rg = vscc_list_alloc((void*)&fn->register_stream, 0, sizeof(struct vscc_register));
+
+            size_t len = 0;
+            fread(&len, sizeof(uint8_t), 1, f);
+            fread(rg->symbol_name, len, 1, f);
+            fread(&rg->scope, sizeof(uint8_t), 1, f);
+            fread(&rg->size, sizeof(uint8_t), 1, f);
+            fread(&rg->is_volatile, sizeof(uint8_t), 1, f);
+
+            rg->index = k++;
+        }
+
+        for (int j = 0; j < fn->instruction_count; j++) {
+            struct vscc_instruction *in = vscc_list_alloc((void*)&fn->instruction_stream, 0, sizeof(struct vscc_instruction));
+
+            fread(&in->opcode, sizeof(uint8_t), 1, f);
+            fread(&in->movement, sizeof(uint8_t), 1, f);
+            fread(&in->size, sizeof(uint8_t), 1, f);
+
+            bool x;
+            bool y;
+
+            fread(&x, 1, 1, f);
+            if (x) {
+                char sym[64] = { 0 };
+                size_t len = 0;
+                fread(&len, sizeof(uint8_t), 1, f);
+                fread(sym, len, 1, f);
+
+                struct vscc_register *rg = vscc_fetch_register_by_name(fn, sym);
+                in->reg1 = rg ? rg : vscc_fetch_global_register_by_name(ctx, sym);
+            }
+
+            fread(&y, 1, 1, f);
+            if (y) {
+                char sym[64] = { 0 };
+                size_t len = 0;
+                fread(&len, sizeof(uint8_t), 1, f);
+                fread(sym, len, 1, f);
+
+                struct vscc_register *rg = vscc_fetch_register_by_name(fn, sym);
+                in->reg2 = rg ? rg : vscc_fetch_global_register_by_name(ctx, sym);
+            }
+
+            if (in->opcode != O_CALL)
+                fread(&in->imm1, sizeof(in->imm1), 1, f);
+            else {
+                char sym[64] = { 0 };
+                size_t len = 0;
+                fread(&len, sizeof(uint8_t), 1, f);
+                fread(sym, len, 1, f);
+
+                in->imm1 = (uintptr_t)vscc_fetch_function_by_name(ctx, sym);
+            }
+            fread(&in->imm2, sizeof(in->imm2), 1, f);
+        }
+
+        fn = fn->next;
+    }
 
     fclose(f);
     return true;
