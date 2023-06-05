@@ -72,9 +72,8 @@ enum vscc_data_scope {
 };
 
 struct vscc_register {
-    struct vscc_register *next_register;
+    struct vscc_register *next;
 
-    char name[MAX_SYMBOL_LEN];
     char symbol_name[MAX_SYMBOL_LEN];
     enum vscc_data_scope scope;
     
@@ -90,7 +89,7 @@ struct vscc_register {
 };
 
 struct vscc_instruction {
-    struct vscc_instruction *next_instruction;
+    struct vscc_instruction *next;
 
     enum vscc_opcode opcode;
     enum vscc_data_movement movement;
@@ -104,12 +103,13 @@ struct vscc_instruction {
 };
 
 struct vscc_function {
-    struct vscc_function *next_function;
+    struct vscc_function *next;
     struct vscc_instruction *instruction_stream;
     struct vscc_register *register_stream;
 
     char symbol_name[MAX_SYMBOL_LEN];
 
+    size_t instruction_count;
     size_t register_count;
     size_t return_size;
 };

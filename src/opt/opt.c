@@ -18,11 +18,11 @@ int vscc_optfn_elim_dead_store(struct vscc_function *function)
     int optimized_out = 0;
 
     /* make sure reserved 'is_read' field is false so it won't conflict the optimizer */
-    for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next_register)
+    for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next)
         reg->is_read = false;
 
     /* loop through all instructions to see which registers are read */
-    for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next_instruction) {
+    for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next) {
         switch (instruction->movement) {
         case M_INVALID:
             break;
@@ -48,7 +48,7 @@ int vscc_optfn_elim_dead_store(struct vscc_function *function)
 
     /* adjust indices */
     size_t idx = 0;
-    for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next_register)
+    for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next)
         reg->index = idx++;
 
     /* return count of how many registers were optimized out of the function */

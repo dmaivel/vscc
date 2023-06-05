@@ -21,11 +21,11 @@ int main()
     vscc_push1(my_main, O_ADD, my_main_b, my_main_a);
     vscc_push3(my_main, O_RET, my_main_b); // return 34
 
-    printf("before:\n%s\n", vscc_fmt_ir_str(&ctx, 512)); 
+    printf("before:\n%s\n", vscc_ir_str(&ctx, 512)); 
 
     printf("eliminated %d registers from function @%s:i%ld\n\n", vscc_optfn_elim_dead_store(my_main), my_main->symbol_name, my_main->return_size * 8);
     printf("eliminated %d instructions from function @%s:i%ld\n\n", vscc_optfn_const_propagation(my_main), my_main->symbol_name, my_main->return_size * 8);
 
-    printf("after:\n%s\n", vscc_fmt_ir_str(&ctx, 512)); 
+    printf("after:\n%s\n", vscc_ir_str(&ctx, 512)); 
     return 0;
 }

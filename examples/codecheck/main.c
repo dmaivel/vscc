@@ -88,10 +88,14 @@ int main()
     vscc_push3(my_main, O_RET, my_main_result);
 
     /* print intermediate representation */
-    printf("%s", vscc_fmt_ir_str(&ctx, 512)); 
+    printf("%s", vscc_ir_str(&ctx, 512)); 
+    vscc_ir_save(&ctx, "main.vscc", false);
+
+    struct vscc_context new_context = { 0 };
+    vscc_ir_load(&new_context, "main.vscc", false);
 
     /* print optimizations */
-    for (struct vscc_function *fn = ctx.function_stream; fn; fn = fn->next_function)
+    for (struct vscc_function *fn = ctx.function_stream; fn; fn = fn->next)
         printf("elim_dead_store  [" LOG_CYAN "%-40s" LOG_DEFAULT " @ " LOG_RED "-%-5d" LOG_DEFAULT "]\n", fn->symbol_name, vscc_optfn_elim_dead_store(fn));    
     puts("");
 

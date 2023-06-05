@@ -3,26 +3,15 @@
 
 #include <ir/intermediate.h>
 
-#define VSCC_FMT_MAGIC 0x63637376
-
-#define VSCC_FMT_IS_SOURCE 0
-#define VSCC_FMT_IS_BINARY 1
-
-struct vscc_ir_file_fmt {
-    int magic;
-    int type;
-    void *data;
-};
-
-#define VSCC_CALCULATE_DATA_SIZE(len) (len - sizeof(struct vscc_ir_file_fmt) - sizeof(void*))
+#define VSCC_IR_FMT_MAGIC 0x43435356 // VSCC
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
 
-char *vscc_fmt_ir_str(struct vscc_context *ctx, size_t max_strlen);
-void vscc_fmt_cvt_ir_file(struct vscc_context *ctx, char *path, bool is_src);
-void vscc_fmt_cvt_file_ir(struct vscc_context *ctx, char *path, bool is_src);
+char *vscc_ir_str(struct vscc_context *ctx, size_t max_strlen);
+bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src);
+bool vscc_ir_load(struct vscc_context *ctx, char *path, bool is_src);
 
 #ifdef __cplusplus
 }
