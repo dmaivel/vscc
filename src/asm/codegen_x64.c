@@ -406,7 +406,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
     struct fill_in_jmp_label *fill_in = NULL;
     char _str_temp[15] = { 0 };
 
-    for (struct vscc_function *function = context->function_stream; function; function = function->next_function) {
+    for (struct vscc_function *function = context->function_stream; function; function = function->next) {
 
         /* to-do: determine release/debug for perf? maybe impact no big deal */
         if (unlikely(generate_symbols))
@@ -424,7 +424,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
         if (likely(function->register_stream != NULL)) {
             /* write stack positions per register */
             size_t determined_stackpos = 0;
-            for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next_register) {
+            for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next) {
                 reg->stackpos = determined_stackpos + reg->size;
                 determined_stackpos += reg->size;
 
@@ -443,7 +443,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
             /* move arguments onto stack */
             determined_stackpos = 0x100 - function->register_stream->size;
             size_t argc = 0;
-            for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next_register) {
+            for (struct vscc_register *reg = function->register_stream; reg; reg = reg->next) {
                 if (reg->scope == S_PARAMETER) {
                     vscc_x64_ptr_reg(&assembler, reg->size == SIZEOF_I32 ? 0 : REX_W, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | RM_BP | argc_to_reg[argc++], determined_stackpos);
                     determined_stackpos -= reg->size;
@@ -452,7 +452,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
         }
 
         /* instruction translation */
-        for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next_instruction) {
+        for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next) {
             switch (instruction->opcode) {
             case O_LOAD: 
                 codegen_load(&assembler, instruction); 
@@ -471,7 +471,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
                 break;
             case O_RET: 
                 codegen_ret(&assembler, instruction);
-                if (unlikely(instruction->next_instruction != NULL)) {
+                if (unlikely(instruction->next != NULL)) {
                     vscc_asm_encode(&assembler, REX_NONE, 2, ENCODE_I8(ASM_JMP), ENCODE_I32(0));
                     push_fill_in(&fill_in, codegen_get_size_of_assembly(&assembler) - 6, DECLABEL_END_FUNCTION, codegen_get_size_of_assembly(&assembler) - 4, 6);
                 }
@@ -555,7 +555,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
     /* to-do: support global registers being stored at the top of the buffer (should be simpler) */
     size_t offs = codegen_get_size_of_assembly(&assembler);
     if (likely(context->global_register_stream != NULL)) {
-        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next_register) {
+        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next) {
             if (unlikely(generate_symbols))
                 symbol_generate_global(&out->symbols, reg, offs);
 
@@ -563,7 +563,7 @@ void vscc_codegen_x64(struct vscc_context *context, struct vscc_compiled_data *o
             offs += reg->size;
         }
 
-        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next_register)
+        for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next)
             fill_in_fill_ins(&fill_in, label_map, &assembler, (size_t)reg);
     }
 

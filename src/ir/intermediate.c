@@ -46,7 +46,7 @@ struct vscc_register *vscc_alloc_global(struct vscc_context *this_context, char 
 
 struct vscc_function *vscc_fetch_function_by_name(struct vscc_context *this_context, char *symbol_name)
 {
-    for (struct vscc_function *fn = this_context->function_stream; fn; fn = fn->next_function)
+    for (struct vscc_function *fn = this_context->function_stream; fn; fn = fn->next)
         if (strcmp(fn->symbol_name, symbol_name) == 0)
             return fn;
     return NULL;
@@ -54,7 +54,7 @@ struct vscc_function *vscc_fetch_function_by_name(struct vscc_context *this_cont
 
 struct vscc_register *vscc_fetch_register_by_name(struct vscc_function *this, char *symbol_name)
 {
-    for (struct vscc_register *reg = this->register_stream; reg; reg = reg->next_register)
+    for (struct vscc_register *reg = this->register_stream; reg; reg = reg->next)
         if (strcmp(reg->symbol_name, symbol_name) == 0)
             return reg;
     return NULL;
@@ -62,7 +62,7 @@ struct vscc_register *vscc_fetch_register_by_name(struct vscc_function *this, ch
 
 struct vscc_register *vscc_fetch_register_by_index(struct vscc_function *this, size_t index)
 {
-    for (struct vscc_register *reg = this->register_stream; reg; reg = reg->next_register)
+    for (struct vscc_register *reg = this->register_stream; reg; reg = reg->next)
         if (reg->index == index)
             return reg;
     return NULL;
@@ -70,7 +70,7 @@ struct vscc_register *vscc_fetch_register_by_index(struct vscc_function *this, s
 
 struct vscc_register *vscc_fetch_global_register_by_name(struct vscc_context *this_context, char *symbol_name)
 {
-    for (struct vscc_register *reg = this_context->global_register_stream; reg; reg = reg->next_register)
+    for (struct vscc_register *reg = this_context->global_register_stream; reg; reg = reg->next)
         if (strcmp(reg->symbol_name, symbol_name) == 0)
             return reg;
     return NULL;
@@ -95,6 +95,7 @@ void vscc_unlink_free_instruction(struct vscc_function *this, struct vscc_instru
     struct vscc_instruction *ins = vscc_list_alloc((void**)&this->instruction_stream, 0, sizeof(struct vscc_instruction)); \
     ins->opcode = o; \
     ins->movement = m; \
+    this->instruction_count++;
 
 void vscc_push0(struct vscc_function *this, enum vscc_opcode opcode, struct vscc_register *dst, size_t src)
 {
