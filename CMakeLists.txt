@@ -10,5 +10,5 @@ add_library(vscc SHARED ${VSCC_GLOB_SRC})
 set_target_properties(vscc PROPERTIES PUBLIC_HEADER include/vscc.h)
 set_target_properties(vscc PROPERTIES C_STANDARD 99)
 
-add_executable(frontend examples/codecheck/main.c)
-target_link_libraries(frontend vscc)
+# add_executable(frontend examples/codecheck/main.c)
+# target_link_libraries(frontend vscc)
