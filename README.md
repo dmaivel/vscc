@@ -11,6 +11,7 @@ cd build
 cmake ..
 cmake --build . --config Release
 ```
+To build one of the examples, uncomment the `frontend` lines from the cmake file.
 
 ## examples
 The primary example is [pyvscc](https://github.com/dmaivel/pyvscc), which is an experimental python compiler. However, this repository contains additional, smaller examples.
