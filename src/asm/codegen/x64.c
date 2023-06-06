@@ -124,7 +124,7 @@ static void codegen_store(struct vscc_asm_context *asmh, struct vscc_instruction
             } 
             /* local = global */
             else {
-                vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh), (size_t)instruction->reg2, vscc_asm_size(asmh) + (instruction->size == SIZEOF_I64 ? 3 : 2), (instruction->size == SIZEOF_I64 ? 7 : 6));
+                vscc_asm_push_fill_in(asmh, (size_t)instruction->reg2, instruction->size == SIZEOF_I64 ? 3 : 2, instruction->size == SIZEOF_I64 ? 7 : 6);
                 vscc_asm_encode(asmh, REX_NONE, 3, ENCODE_I8(ASM_MOV_REG_DWORD_PTR), ENCODE_I8(0x05), ENCODE_I32(0)); /* mov eax, dword ptr [rip + 0] */
 
                 vscc_x64_ptr_reg(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
@@ -138,18 +138,18 @@ static void codegen_store(struct vscc_asm_context *asmh, struct vscc_instruction
         switch (instruction->movement) {
         case M_REG_IMM:
             if (instruction->size == SIZEOF_I32) {
-                vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh), (size_t)instruction->reg1, vscc_asm_size(asmh) + 2, 10);
+                vscc_asm_push_fill_in(asmh, (size_t)instruction->reg1, 2, 10);
                 vscc_asm_encode(asmh, REX_NONE, 4, ENCODE_I8(ASM_MOV_DWORD_PTR_IMM), ENCODE_I8(0x05), ENCODE_I32(0), ENCODE_I32(instruction->imm1)); /* mov dword ptr [rip + 0], imm1 */
             }
             else {
                 if (unlikely(instruction->imm1 > UINT32_MAX)) {
                     vscc_asm_encode(asmh, REX_W, 2, ENCODE_I8(0xbf), ENCODE_I64(instruction->imm1)); /* movabs rdi, imm1:uint64_t */
 
-                    vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh), (size_t)instruction->reg1, vscc_asm_size(asmh) + 3, 7);
+                    vscc_asm_push_fill_in(asmh, (size_t)instruction->reg1, 3, 7);
                     vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(ASM_MOV_DWORD_PTR_REG), ENCODE_I8(0x3d), ENCODE_I32(0)); /* mov qword ptr [rip + 0], rdi */
                 }
                 else {
-                    vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh), (size_t)instruction->reg1, vscc_asm_size(asmh) + 3, 11);
+                    vscc_asm_push_fill_in(asmh, (size_t)instruction->reg1, 3, 11);
                     vscc_asm_encode(asmh, REX_W, 4, ENCODE_I8(ASM_MOV_DWORD_PTR_IMM), ENCODE_I8(0x05), ENCODE_I32(0), ENCODE_I32(instruction->imm1)); /* mov qword ptr [rip + 0], imm1 */
                 }
             }
@@ -179,7 +179,7 @@ static void codegen_lea(struct vscc_asm_context *asmh, struct vscc_instruction *
      * label map required as global variables are stored at the end
      * to-do: maybe support globals at the top?
      */
-    vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh), (size_t)instruction->reg2, vscc_asm_size(asmh) + 3, 7);
+    vscc_asm_push_fill_in(asmh, (size_t)instruction->reg2, 3, 7);
 
     switch (instruction->movement) {
     case M_REG_IMM:
@@ -296,8 +296,8 @@ static void codegen_ret(struct vscc_asm_context *asmh, struct vscc_instruction *
     }
 
     if (unlikely(instruction->next != NULL)) {
+        vscc_asm_push_fill_in(asmh, DECLABEL_END_FUNCTION, 1, 5);
         vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_JMP), ENCODE_I32(0));
-        vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh) - 6, DECLABEL_END_FUNCTION, vscc_asm_size(asmh) - 4, 6);
     }
 }
 
@@ -311,22 +311,22 @@ static void codegen_syscall(struct vscc_asm_context *asmh, struct vscc_instructi
 static void codegen_jmp(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
 {
     if (instruction->opcode >= O_JE && instruction->opcode <= O_JG) {
-        vscc_asm_encode(asmh, REX_NONE, 3, ENCODE_I8(ASM_TWO_BYTES), ENCODE_I8(instruction->opcode + 118), ENCODE_I32(vscc_asm_get_offset(asmh, asmh->label_map, instruction->imm1, 6, false, 0)));
-        if (vscc_asm_get_label(asmh->label_map, instruction->imm1) == NOT_FOUND)
-            vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh) - 6, instruction->imm1, vscc_asm_size(asmh) - 4, 6);
+        if (vscc_asm_get_label(asmh, instruction->imm1) == NOT_FOUND)
+            vscc_asm_push_fill_in(asmh, instruction->imm1, 2, 6);
+        vscc_asm_encode(asmh, REX_NONE, 3, ENCODE_I8(ASM_TWO_BYTES), ENCODE_I8(instruction->opcode + 118), ENCODE_I32(vscc_asm_get_offset(asmh, instruction->imm1, 6, false, 0)));
     }
     else {
-        vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_JMP), ENCODE_I32(vscc_asm_get_offset(asmh, asmh->label_map, instruction->imm1, 5, false, 0)));
-                if (vscc_asm_get_label(asmh->label_map, instruction->imm1) == NOT_FOUND)
-                    vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh) - 5, instruction->imm1, vscc_asm_size(asmh) - 4, 5);
+        if (vscc_asm_get_label(asmh, instruction->imm1) == NOT_FOUND)
+            vscc_asm_push_fill_in(asmh, instruction->imm1, 1, 5);
+        vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_JMP), ENCODE_I32(vscc_asm_get_offset(asmh, instruction->imm1, 5, false, 0)));
     }
 }
 
 static void codegen_call(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
 {
-    vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_CALL), ENCODE_I32(vscc_asm_get_offset(asmh, asmh->label_map, instruction->imm1, 5, false, 0)));
-    if (vscc_asm_get_label(asmh->label_map, instruction->imm1) == NOT_FOUND)
-        vscc_asm_push_fill_in(&asmh->fill_in, vscc_asm_size(asmh) - 5, instruction->imm1, vscc_asm_size(asmh) - 4, 5);
+    if (vscc_asm_get_label(asmh, instruction->imm1) == NOT_FOUND)
+        vscc_asm_push_fill_in(asmh, instruction->imm1, 1, 5);
+    vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_CALL), ENCODE_I32(vscc_asm_get_offset(asmh, instruction->imm1, 5, false, 0)));
     if (instruction->reg1 != NULL && ((struct vscc_function*)instruction->imm1)->return_size != 0)
         vscc_x64_ptr_reg(asmh, REX_W, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | RM_BP | REG_AX, 0x100 - instruction->reg1->stackpos);
     asmh->argc = 0;
