@@ -46,7 +46,6 @@ Lower priority features:
 
 ## intermediate language
 ### opcodes
-The 64-bit through 8-bit columns represent their support within `codegen`
 | Opcode | Description | Destination Operand | Source Operand | Support |
 | --- | ----------- | --- | --- | --- |
 | O_ADD | Addition | Register | Register/Immediate | :warning: |
