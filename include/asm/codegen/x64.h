@@ -81,14 +81,19 @@ enum vscc_x64_abi {
 #define ASM_MOV_BYTE_PTR_REG     0x88
 #define ASM_MOV_REG_BYTE_PTR     0x8A
 
+#define ASM_ARITH_DWORD_PTR_IMM  0x83
 #define ASM_ADD_DWORD_PTR_IMM    0x83
-#define ASM_ADD_REG_DWORD_PTR    0x01
-
 #define ASM_SUB_DWORD_PTR_IMM    0x83
-#define ASM_SUB_REG_DWORD_PTR    0x29
 
 #define ASM_CMP_DWORD_PTR_IMM    0x83
 #define ASM_CMP_BYTE_PTR_IMM     0x80
+
+#define ASM_ADD_DWORD_PTR_REG    0x01
+#define ASM_OR_DWORD_PTR_REG     0x09
+#define ASM_AND_DWORD_PTR_REG    0x21
+#define ASM_SUB_DWORD_PTR_REG    0x29
+#define ASM_XOR_DWORD_PTR_REG    0x31
+#define ASM_CMP_DWORD_PTR_REG    0x39
 
 #define ASM_MOV_EAX              0xB8
 

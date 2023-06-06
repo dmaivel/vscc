@@ -54,9 +54,9 @@ The 64-bit through 8-bit columns represent their support within `codegen`
 | O_SUB | Subtraction | Register | Register/Immediate | :warning: |
 | O_MUL | Multiplication | Register | Register/Immediate | :x: |
 | O_DIV | Division | Register | Register/Immediate | :x: |
-| O_XOR | Exclusive Or | Register | Register/Immediate | :x: |
-| O_AND | And | Register | Register/Immediate | :x: |
-| O_OR | Or | Register | Register/Immediate | :x: |
+| O_XOR | Exclusive Or | Register | Register/Immediate | :warning: |
+| O_AND | And | Register | Register/Immediate | :warning: |
+| O_OR | Or | Register | Register/Immediate | :warning: |
 | O_SHL | Left Shift | Register | Register/Immediate | :x: |
 | O_SHR | Right Shift | Register | Register/Immediate | :x: |
 | O_CMP | Compare register to value | Register | Register/Immediate | :warning: |

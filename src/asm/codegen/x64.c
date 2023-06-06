@@ -1,5 +1,6 @@
 #include "asm/codegen.h"
 #include "asm/codegen/x64.h"
+#include "ir/intermediate.h"
 #include <stdio.h>
 #include <string.h>
 #include <vscc.h>
@@ -203,9 +204,9 @@ static void codegen_cmp(struct vscc_asm_context *asmh, struct vscc_instruction *
     switch (instruction->movement) {
     case M_REG_IMM:
         if (instruction->size == SIZEOF_I8)
-            vscc_x64_ptr_imm(asmh, REX_NONE, ASM_CMP_BYTE_PTR_IMM, MOD_DISP8 | 0b00111000 /* cmp */ | RM_BP, dst_stackpos, ENCODE_I8(instruction->imm1));
+            vscc_x64_ptr_imm(asmh, REX_NONE, ASM_CMP_BYTE_PTR_IMM, MOD_DISP8 | RM_BP | REG_DI, dst_stackpos, ENCODE_I8(instruction->imm1));
         else if (instruction->size == SIZEOF_I32 || instruction->size == SIZEOF_I64)
-            vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_CMP_DWORD_PTR_IMM, MOD_DISP8 | RM_BP | 0b00111000, dst_stackpos, ENCODE_I8(instruction->imm1));
+            vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_CMP_DWORD_PTR_IMM, MOD_DISP8 | RM_BP | REG_DI, dst_stackpos, ENCODE_I8(instruction->imm1));
         break;
     case M_REG_REG:
         /* unimplemented */
@@ -215,36 +216,64 @@ static void codegen_cmp(struct vscc_asm_context *asmh, struct vscc_instruction *
     }
 }
 
-static void codegen_add(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
+static inline int arith_get_encode(enum vscc_opcode op)
 {
-    uint16_t dst_stackpos = 0x100 - instruction->reg1->stackpos;
-    uint16_t src_stackpos = 0x100 - (instruction->reg2 != NULL ? instruction->reg2->stackpos : 0);
+    static const int encode[] = {
+        0b00000000, // add
+        0b00001000, // or
+        0b00010000, // adc
+        0b00011000, // sbb
+        0b00100000, // and
+        0b00101000, // sub
+        0b00110000, // xor
+        0b00111000  // cmp
+    };
 
-    switch (instruction->movement) {
-    case M_REG_IMM:
-        vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_ADD_DWORD_PTR_IMM, MOD_DISP8 | RM_BP, dst_stackpos, ENCODE_I8(instruction->imm1));
-        break;
-    case M_REG_REG:
-        vscc_x64_reg_ptr(asmh, 0, ASM_MOV_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, src_stackpos);
-        vscc_x64_reg_ptr(asmh, 0, ASM_ADD_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
-        break;
-    default:
-        break;
+    switch (op) {
+    case O_ADD: return encode[0];
+    case O_OR: return encode[1];
+    case O_AND: return encode[4];
+    case O_SUB: return encode[5];
+    case O_XOR: return encode[6];
+    default: return 0;
     }
 }
 
-static void codegen_sub(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
+static inline int arith_get_opcode(enum vscc_opcode op)
+{
+    static const int opcode[] = {
+        ASM_ADD_DWORD_PTR_REG,
+        ASM_OR_DWORD_PTR_REG,
+        0,
+        0,
+        ASM_AND_DWORD_PTR_REG,
+        ASM_SUB_DWORD_PTR_REG,
+        ASM_XOR_DWORD_PTR_REG,
+        ASM_CMP_DWORD_PTR_REG
+    };
+
+    switch (op) {
+    case O_ADD: return opcode[0];
+    case O_OR: return opcode[1];
+    case O_AND: return opcode[4];
+    case O_SUB: return opcode[5];
+    case O_XOR: return opcode[6];
+    default: return 0;
+    }
+}
+
+static void codegen_arith(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
 {
     uint16_t dst_stackpos = 0x100 - instruction->reg1->stackpos;
     uint16_t src_stackpos = 0x100 - (instruction->reg2 != NULL ? instruction->reg2->stackpos : 0);
 
     switch (instruction->movement) {
     case M_REG_IMM:
-        vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_SUB_DWORD_PTR_IMM, MOD_DISP8 | RM_BP | REG_BP, dst_stackpos, ENCODE_I8(instruction->imm1));
+        vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_ARITH_DWORD_PTR_IMM, MOD_DISP8 | RM_BP | arith_get_encode(instruction->opcode), dst_stackpos, ENCODE_I8(instruction->imm1));
         break;
     case M_REG_REG:
-        vscc_x64_reg_ptr(asmh, 0, ASM_MOV_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, src_stackpos);
-        vscc_x64_reg_ptr(asmh, 0, ASM_SUB_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
+        vscc_x64_reg_ptr(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, src_stackpos);
+        vscc_x64_reg_ptr(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, arith_get_opcode(instruction->opcode), MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
         break;
     default:
         break;
@@ -341,15 +370,15 @@ void vscc_codegen_implement_x64(struct vscc_codegen_interface *interface, enum v
         .startfn = codegen_function_start,
         .endfn = codegen_function_end,
 
-        .addfn = codegen_add,
+        .addfn = codegen_arith,
         .loadfn = codegen_load,
         .storefn = codegen_store,
-        .subfn = codegen_sub,
+        .subfn = codegen_arith,
         .mulfn = NULL,
         .divfn = NULL,
-        .xorfn = NULL,
-        .andfn = NULL,
-        .orfn = NULL,
+        .xorfn = codegen_arith,
+        .andfn = codegen_arith,
+        .orfn = codegen_arith,
         .shlfn = NULL,
         .shrfn = NULL,
         .cmpfn = codegen_cmp,
