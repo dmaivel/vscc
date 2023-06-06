@@ -24,7 +24,7 @@ The `examples` directory contains the following subprojects:
 This project is currently unfinished with a vast majority of the feature set either needing to be finished, polished, rewritten, or awaiting implementation. This is a list of priorities for future development:
 - [x] Internal memory manager
 - [ ] User memory manager (free code, symbols, ir, memory limits)
-- [ ] Refactor `codegen` implementation
+- [x] Refactor `codegen` implementation
     - create a codegen interface structure, contains function pointers
     - base for adding support for new ABIs/architectures
 - [x] Save/load IR to and from storage
@@ -138,10 +138,12 @@ status = vscc_ir_load(&ctx, "/path/to/save.vscc");
 ### context initialization
 ```c
 struct vscc_compiled_data compiled = { 0 }; 
+struct vscc_codegen_interface interface = { 0 };
 ```
 ### compile context
 ```c
-vscc_codegen_x64(&ctx, &compiled, true); // true: generate symbols
+vscc_codegen_implement_x64(&interface, ABI_SYSV);
+vscc_codegen(&ctx, &interface, &compiled, true); // true: generate symbols
 ```
 
 ## optimization
