@@ -44,7 +44,9 @@ int main()
     vscc_push3(my_strlen, O_RET, my_strlen_len);
 
     /* compile */
-    vscc_codegen_x64(&ctx, &compiled, true);
+    struct vscc_codegen_interface interface = { 0 };
+    vscc_codegen_implement_x64(&interface, ABI_SYSV);
+    vscc_codegen(&ctx, &interface, &compiled, true);
 
     /* map executable into memory */
     void *exe = mmap(NULL, compiled.length, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);

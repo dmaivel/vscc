@@ -1,3 +1,5 @@
+#include "asm/codegen.h"
+#include "asm/codegen/x64.h"
 #include "ir/fmt.h"
 #include <vscc.h>
 
@@ -111,7 +113,9 @@ int main()
     puts("");
 
     /* compile */
-    vscc_codegen_x64(&ctx, &compiled, true);
+    struct vscc_codegen_interface interface = { 0 };
+    vscc_codegen_implement_x64(&interface, ABI_SYSV);
+    vscc_codegen(&ctx, &interface, &compiled, true);
 
     /* print generated symbols */
     for (struct vscc_symbol *symbol = compiled.symbols; symbol; symbol = symbol->next) {
