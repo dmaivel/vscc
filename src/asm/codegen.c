@@ -67,11 +67,11 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         if (unlikely(generate_symbols))
             vscc_symbol_generate_function(&out->symbols, function, vscc_asm_size(&assembler));
 
-        vscc_asm_push_label(&assembler.label_map, (size_t)function, vscc_asm_size(&assembler), true);
+        vscc_asm_push_label(&assembler, (size_t)function, vscc_asm_size(&assembler), true);
         assembler.argc = 0;
         
         /* check for any labels that can be filled with the proper relative offsets */
-        vscc_asm_fill_ins(&assembler.fill_in, assembler.label_map, &assembler, (size_t)function);
+        vscc_asm_fill_ins(&assembler, (size_t)function);
 
         /* startup */
         interface->startfn(out, &assembler, function, generate_symbols);
@@ -80,8 +80,8 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next) {
             switch (instruction->opcode) {
             case O_DECLABEL:
-                vscc_asm_push_label(&assembler.label_map, instruction->imm1, vscc_asm_size(&assembler), false);
-                vscc_asm_fill_ins(&assembler.fill_in, assembler.label_map, &assembler, instruction->imm1);
+                vscc_asm_push_label(&assembler, instruction->imm1, vscc_asm_size(&assembler), false);
+                vscc_asm_fill_ins(&assembler, instruction->imm1);
                 break;
             default:;
                 vscc_codegen_impl fn = call_table[instruction->opcode];
@@ -94,8 +94,8 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         /*
          * to-do: maybe determine ret count and decide whether these two lines require execution
          */
-        vscc_asm_push_label(&assembler.label_map, DECLABEL_END_FUNCTION, vscc_asm_size(&assembler), false);
-        vscc_asm_fill_ins(&assembler.fill_in, assembler.label_map, &assembler, DECLABEL_END_FUNCTION);
+        vscc_asm_push_label(&assembler, DECLABEL_END_FUNCTION, vscc_asm_size(&assembler), false);
+        vscc_asm_fill_ins(&assembler, DECLABEL_END_FUNCTION);
 
         interface->endfn(out, &assembler, function, generate_symbols);
 
@@ -110,12 +110,12 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
             if (unlikely(generate_symbols))
                 vscc_symbol_generate_global(&out->symbols, reg, offs);
 
-            vscc_asm_push_label(&assembler.label_map, (size_t)reg, offs, false);
+            vscc_asm_push_label(&assembler, (size_t)reg, offs, false);
             offs += reg->size;
         }
 
         for (struct vscc_register *reg = context->global_register_stream; reg; reg = reg->next)
-            vscc_asm_fill_ins(&assembler.fill_in, assembler.label_map, &assembler, (size_t)reg);
+            vscc_asm_fill_ins(&assembler, (size_t)reg);
     }
 
     /* write compiled code to output */

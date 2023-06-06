@@ -63,11 +63,11 @@ struct vscc_compiled_data {
 extern "C" {
 #endif
 
-uintptr_t vscc_asm_get_label(struct vscc_label *label_map, size_t id);
-void vscc_asm_push_label(struct vscc_label **label_map, size_t id, uintptr_t address, bool is_function);
-void vscc_asm_push_fill_in(struct vscc_fill_in_jmp_label **fill_in, size_t cur_size, size_t id, uintptr_t idx, size_t ins_len);
-uint32_t vscc_asm_get_offset(struct vscc_asm_context *assembler, struct vscc_label *label_map, size_t id, size_t ins_length, bool override, size_t override_cur);
-void vscc_asm_fill_ins(struct vscc_fill_in_jmp_label **fill_in, struct vscc_label *label_map, struct vscc_asm_context *assembler, size_t id);
+uintptr_t vscc_asm_get_label(struct vscc_asm_context *assembler, size_t id);
+void vscc_asm_push_label(struct vscc_asm_context *assembler, size_t id, uintptr_t address, bool is_function);
+void vscc_asm_push_fill_in(struct vscc_asm_context *assembler, size_t id, uintptr_t idx, size_t ins_len);
+uint32_t vscc_asm_get_offset(struct vscc_asm_context *assembler, size_t id, size_t ins_length, bool override, size_t override_cur);
+void vscc_asm_fill_ins(struct vscc_asm_context *assembler, size_t id);
 
 size_t vscc_asm_size(struct vscc_asm_context *ctx);
 void vscc_asm_overwrite(struct vscc_asm_context *asmh, int dst_idx, void* src, size_t length);
