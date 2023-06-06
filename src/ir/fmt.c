@@ -118,11 +118,8 @@ char *vscc_ir_str(struct vscc_context *ctx, size_t max_strlen)
     return str;
 }
 
-bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src)
+bool vscc_ir_save(struct vscc_context *ctx, char *path)
 {
-    if (is_src)
-        assert(false && "cannot save ir as source");
-    
     /* 
      * open file, write magic
      */
@@ -231,11 +228,8 @@ bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src)
     return true;
 }
 
-bool vscc_ir_load(struct vscc_context *ctx, char *path, bool is_src)
+bool vscc_ir_load(struct vscc_context *ctx, char *path)
 {
-    if (is_src)
-        assert(false && "cannot load ir as source");
-
     /* 
      * open file, read magic
      */

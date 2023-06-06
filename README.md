@@ -26,9 +26,8 @@ This project is currently unfinished with a vast majority of the feature set eit
 - [ ] User memory manager (free code, symbols, ir, memory limits)
 - [ ] Refactor `codegen` implementation
     - create a codegen interface structure, contains function pointers
-    - base for adding support for new abi's or architectures
-- [ ] Save IR to storage as source/binary (improve source syntax)
-- [ ] Load IR from storage
+    - base for adding support for new ABIs/architectures
+- [x] Save/load IR to and from storage
 - [ ] Full Sys-V support
 - [ ] Basic support for all IR opcodes in `codegen`
 - [ ] Finish implementing all IR opcodes in `codegen`
@@ -37,6 +36,7 @@ This project is currently unfinished with a vast majority of the feature set eit
 - [ ] Add more optimization routines
 
 Lower priority features:
+- [ ] Support IR as source instead of just binary
 - [ ] MS-ABI support
 - [ ] x86 (32-bit) support
 - [ ] AVX2 support
@@ -130,8 +130,8 @@ struct vscc_syscall_args syscall_write = {
 ```c
 bool status;
 
-status = vscc_ir_save(&ctx, "/path/to/save.vscc", false); /* only false supported */
-status = vscc_ir_load(&ctx, "/path/to/save.vscc", false);
+status = vscc_ir_save(&ctx, "/path/to/save.vscc");
+status = vscc_ir_load(&ctx, "/path/to/save.vscc");
 ```
 
 ## code generation
