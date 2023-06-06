@@ -10,8 +10,8 @@ extern "C" {
 #endif
 
 char *vscc_ir_str(struct vscc_context *ctx, size_t max_strlen);
-bool vscc_ir_save(struct vscc_context *ctx, char *path, bool is_src);
-bool vscc_ir_load(struct vscc_context *ctx, char *path, bool is_src);
+bool vscc_ir_save(struct vscc_context *ctx, char *path);
+bool vscc_ir_load(struct vscc_context *ctx, char *path);
 
 #ifdef __cplusplus
 }

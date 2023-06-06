@@ -31,7 +31,7 @@ int main()
     struct vscc_context ctx = { 0 };
 
     /* attempt load */
-    bool status = vscc_ir_load(&ctx, "codecheck.vscc", false);
+    bool status = vscc_ir_load(&ctx, "codecheck.vscc");
 
     /* load failed, generate ir */
     if (!status) {
@@ -93,7 +93,7 @@ int main()
         vscc_push3(my_main, O_RET, my_main_result);
 
         /* save */
-        vscc_ir_save(&ctx, "codecheck.vscc", false);
+        vscc_ir_save(&ctx, "codecheck.vscc");
     }
     else {
         printf("found existing save of ir, re-using\n\n");
