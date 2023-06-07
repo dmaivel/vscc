@@ -47,13 +47,6 @@ struct vscc_asm_context {
     uint64_t scratch[4];
 };
 
-struct vscc_compiled_data {
-    uint8_t *buffer;
-    size_t length;
-
-    struct vscc_symbol *symbols;
-};
-
 #define ENCODE_I8(x) x, SIZEOF_I8
 #define ENCODE_I16(x) x, SIZEOF_I16
 #define ENCODE_I32(x) x, SIZEOF_I32
