@@ -6,12 +6,19 @@
 
 #define DECLABEL_END_FUNCTION -1
 
-typedef void(*vscc_func_setup)(struct vscc_compiled_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols);
+struct vscc_compiled_data {
+    uint8_t *buffer;
+    size_t length;
+
+    struct vscc_symbol *symbols;
+};
+
+typedef void(*vscc_codegen_fnsetup)(struct vscc_compiled_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols);
 typedef void(*vscc_codegen_impl)(struct vscc_asm_context *asmh, struct vscc_instruction *instruction);
 
 struct vscc_codegen_interface {
-    vscc_func_setup startfn;
-    vscc_func_setup endfn;
+    vscc_codegen_fnsetup startfn;
+    vscc_codegen_fnsetup endfn;
 
     vscc_codegen_impl addfn;
     vscc_codegen_impl loadfn;
