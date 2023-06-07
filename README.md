@@ -30,7 +30,7 @@ This project is currently unfinished with a vast majority of the feature set eit
     - base for adding support for new ABIs/architectures
 - [x] Save/load IR to and from storage
 - [ ] Full Sys-V support
-- [ ] Basic support for all IR opcodes in `codegen`
+- [x] Basic support for all IR opcodes in `codegen`
 - [ ] Finish implementing all IR opcodes in `codegen`
 - [ ] Add/finish 8-bit & 16-bit support
 - [ ] Add floating point support
@@ -52,13 +52,13 @@ Lower priority features:
 | O_LOAD | Load value from memory into register | Register | Register/Immediate | :warning: |
 | O_STORE | Store value into register | Register | Register/Immediate | :heavy_check_mark: |
 | O_SUB | Subtraction | Register | Register/Immediate | :warning: |
-| O_MUL | Multiplication | Register | Register/Immediate | :x: |
-| O_DIV | Division | Register | Register/Immediate | :x: |
+| O_MUL | Multiplication | Register | Register/Immediate | :warning: |
+| O_DIV | Division | Register | Register/Immediate | :warning: |
 | O_XOR | Exclusive Or | Register | Register/Immediate | :warning: |
 | O_AND | And | Register | Register/Immediate | :warning: |
 | O_OR | Or | Register | Register/Immediate | :warning: |
-| O_SHL | Left Shift | Register | Register/Immediate | :x: |
-| O_SHR | Right Shift | Register | Register/Immediate | :x: |
+| O_SHL | Left Shift | Register | Register/Immediate | :warning: |
+| O_SHR | Right Shift | Register | Register/Immediate | :warning: |
 | O_CMP | Compare register to value | Register | Register/Immediate | :warning: |
 | O_JMP | Jump | Immediate |  | :heavy_check_mark: |
 | O_JE | Jump if equal | Immediate |  | :heavy_check_mark: |

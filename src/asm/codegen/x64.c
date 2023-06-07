@@ -280,6 +280,57 @@ static void codegen_arith(struct vscc_asm_context *asmh, struct vscc_instruction
     }
 }
 
+static void codegen_mul(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
+{
+    uint16_t dst_stackpos = 0x100 - instruction->reg1->stackpos;
+    uint16_t src_stackpos = 0x100 - (instruction->reg2 != NULL ? instruction->reg2->stackpos : 0);
+
+    switch (instruction->movement) {
+    case M_REG_IMM:
+        vscc_x64_reg_ptr(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_REG_DWORD_PTR, MOD_DISP8 | REG_DX | RM_BP, dst_stackpos);
+        vscc_x64_reg_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_REG_IMM, MOD_RM | RM_AX, instruction->imm1);
+        vscc_asm_encode(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, 2, ENCODE_I8(0xF7), ENCODE_I8(0xE0 | RM_DX)); /* mul rdx */
+        vscc_x64_ptr_reg(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
+        break;
+    default:
+        break;
+    }
+}
+
+static void codegen_div(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
+{
+    uint16_t dst_stackpos = 0x100 - instruction->reg1->stackpos;
+    uint16_t src_stackpos = 0x100 - (instruction->reg2 != NULL ? instruction->reg2->stackpos : 0);
+
+    switch (instruction->movement) {
+    case M_REG_IMM:
+        vscc_asm_encode(asmh, REX_W, 2, ENCODE_I8(0x31), ENCODE_I8(0xD2)); /* xor rdx, rdx */
+        vscc_x64_reg_ptr(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_REG_DWORD_PTR, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
+        vscc_x64_reg_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_REG_IMM, MOD_RM | RM_DI, instruction->imm1);
+        vscc_asm_encode(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, 2, ENCODE_I8(0xF7), ENCODE_I8(0xF0 | RM_DI)); /* div rdi */
+        vscc_x64_ptr_reg(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | REG_AX | RM_BP, dst_stackpos);
+        break;
+    default:
+        break;
+    }
+}
+
+static void codegen_shift(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
+{
+    uint16_t dst_stackpos = 0x100 - instruction->reg1->stackpos;
+    uint16_t src_stackpos = 0x100 - (instruction->reg2 != NULL ? instruction->reg2->stackpos : 0);
+
+    int encode = instruction->opcode == O_SHL ? 0b00100000 : 0b00101000;
+
+    switch (instruction->movement) {
+    case M_REG_IMM:
+        vscc_x64_ptr_imm(asmh, instruction->size == SIZEOF_I64 ? REX_W : 0, 0xC1, MOD_DISP8 | RM_BP | encode, dst_stackpos, ENCODE_I8(instruction->imm1));
+        break;
+    default:
+        break;
+    }
+}
+
 /* to-do: support r8 & r9, stack arguments */
 static inline uint8_t codegen_psharg_determine_register(int argc, bool rm) 
 {
@@ -374,13 +425,13 @@ void vscc_codegen_implement_x64(struct vscc_codegen_interface *interface, enum v
         .loadfn = codegen_load,
         .storefn = codegen_store,
         .subfn = codegen_arith,
-        .mulfn = NULL,
-        .divfn = NULL,
+        .mulfn = codegen_mul,
+        .divfn = codegen_div,
         .xorfn = codegen_arith,
         .andfn = codegen_arith,
         .orfn = codegen_arith,
-        .shlfn = NULL,
-        .shrfn = NULL,
+        .shlfn = codegen_shift,
+        .shrfn = codegen_shift,
         .cmpfn = codegen_cmp,
         .jmpfn = codegen_jmp,
         .retfn = codegen_ret,

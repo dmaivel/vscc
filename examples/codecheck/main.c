@@ -92,10 +92,11 @@ int main()
         vscc_push0(my_main, O_CALL, my_main_result, (uintptr_t)my_print);
         vscc_push0(my_main, O_STORE, my_test_var, 1234);
         vscc_push1(my_main, O_STORE, my_main_result, my_test_var);
+        vscc_push0(my_main, O_DIV, my_main_result, 10);
         vscc_push3(my_main, O_RET, my_main_result);
 
         /* save */
-        vscc_ir_save(&ctx, "codecheck.vscc");
+        //vscc_ir_save(&ctx, "codecheck.vscc");
     }
     else {
         printf("found existing save of ir, re-using\n\n");
