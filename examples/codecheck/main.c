@@ -96,7 +96,7 @@ int main()
         vscc_push3(my_main, O_RET, my_main_result);
 
         /* save */
-        //vscc_ir_save(&ctx, "codecheck.vscc");
+        vscc_ir_save(&ctx, "codecheck.vscc");
     }
     else {
         printf("found existing save of ir, re-using\n\n");
