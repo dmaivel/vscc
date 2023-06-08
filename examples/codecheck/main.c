@@ -103,7 +103,7 @@ int main()
     }
 
     /* compiled context */
-    struct vscc_compiled_data compiled = { 0 };
+    struct vscc_codegen_data compiled = { 0 };
 
     /* print intermediate representation */
     printf("%s", vscc_ir_str(&ctx, 512)); 

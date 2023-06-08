@@ -19,7 +19,7 @@ static const int argc_to_reg[] = {
     REG_CX
 };
 
-static void codegen_function_start(struct vscc_compiled_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
+static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     size_t stack_allocation_size = 0;
     if (likely(function->register_stream != NULL)) {
@@ -55,7 +55,7 @@ static void codegen_function_start(struct vscc_compiled_data *out, struct vscc_a
     asmh->scratch[0] = stack_allocation_size;
 }
 
-static void codegen_function_end(struct vscc_compiled_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
+static void codegen_function_end(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     if (likely(function->register_stream != NULL)) {
         vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(0x83), ENCODE_I8(0xC4), ENCODE_I8(asmh->scratch[0])); /* add rsp, ... */

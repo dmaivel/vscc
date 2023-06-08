@@ -29,7 +29,7 @@ int main()
     struct vscc_register *my_strlen_deref = vscc_alloc(my_strlen, "deref_char", SIZEOF_I8, NOT_PARAMETER, NOT_VOLATILE);
 
     /* compiled context */
-    struct vscc_compiled_data compiled;
+    struct vscc_codegen_data compiled;
 
     /* strlen definition */
     vscc_push0(my_strlen, O_STORE, my_strlen_len, 0);
