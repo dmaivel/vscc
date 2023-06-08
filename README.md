@@ -137,7 +137,7 @@ status = vscc_ir_load(&ctx, "/path/to/save.vscc");
 ## code generation
 ### context initialization
 ```c
-struct vscc_compiled_data compiled = { 0 }; 
+struct vscc_codegen_data compiled = { 0 }; 
 struct vscc_codegen_interface interface = { 0 };
 ```
 ### compile context

@@ -20,7 +20,7 @@ static bool equals_label(void *a, void *b)
     return !x->is_function;
 }
 
-void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *interface, struct vscc_compiled_data *out, bool generate_symbols)
+void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *interface, struct vscc_codegen_data *out, bool generate_symbols)
 {
     vscc_codegen_impl call_table[] = {
         NULL, /* invalid */
