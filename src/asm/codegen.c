@@ -1,5 +1,3 @@
-#include "asm/codegen.h"
-#include "ir/intermediate.h"
 #include <vscc.h>
 #include <asm/assembler.h>
 #include <util/list.h>
@@ -8,11 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-static bool equals(void *a, void *b)
-{
-    return a == b;
-}
 
 static bool equals_label(void *a, void *b)
 {
