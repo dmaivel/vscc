@@ -39,7 +39,7 @@ static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_as
 
         /* determine how much of the stack the function requires */
         stack_allocation_size = determined_stackpos;
-        vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(0x83), ENCODE_I8(0xEC), ENCODE_I8(stack_allocation_size)); /* sub rsp, ... */
+        vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(ASM_ARITH_DWORD_PTR_IMM), ENCODE_I8(MOD_RM | 0b00101000 | RM_SP), ENCODE_I8(stack_allocation_size)); /* sub rsp, ... */
 
         /* move arguments onto stack */
         determined_stackpos = 0x100 - function->register_stream->size;
@@ -58,7 +58,7 @@ static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_as
 static void codegen_function_end(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     if (likely(function->register_stream != NULL)) {
-        vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(0x83), ENCODE_I8(0xC4), ENCODE_I8(asmh->scratch[0])); /* add rsp, ... */
+        vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(ASM_ARITH_DWORD_PTR_IMM), ENCODE_I8(MOD_RM | RM_SP), ENCODE_I8(asmh->scratch[0])); /* add rsp, ... */
         vscc_x64_pop_rbp(asmh);
     }
 
