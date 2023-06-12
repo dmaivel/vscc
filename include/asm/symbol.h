@@ -22,8 +22,16 @@ struct vscc_symbol {
     uintptr_t offset;
 };
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 void vscc_symbol_generate_function(struct vscc_symbol **root, struct vscc_function *function, size_t offset);
 void vscc_symbol_generate_register(struct vscc_symbol **root, struct vscc_function *owner, struct vscc_register *reg);
 void vscc_symbol_generate_global(struct vscc_symbol **root, struct vscc_register *reg, size_t offset);
 
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* _VSCC_SYMBOL_H_ */

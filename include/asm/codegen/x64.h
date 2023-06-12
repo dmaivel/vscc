@@ -134,6 +134,14 @@ enum vscc_x64_abi {
 #define vscc_x64_reg_imm(ctx, rex, op, modrm, imm)              vscc_asm_encode(ctx, rex, 3, ENCODE_I8(op), ENCODE_I8(modrm), ENCODE_I32(imm))
 #define vscc_x64_reg_reg(ctx, rex, op, modrm)                   vscc_asm_encode(ctx, rex, 2, ENCODE_I8(op), ENCODE_I8(MOD_RM | modrm))
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 void vscc_codegen_implement_x64(struct vscc_codegen_interface *interface, enum vscc_x64_abi abi);
 
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* _VSCC_CODEGEN_X64_H_ */

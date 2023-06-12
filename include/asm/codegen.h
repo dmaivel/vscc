@@ -40,6 +40,14 @@ struct vscc_codegen_interface {
     vscc_codegen_impl leafn;
 };
 
+#ifdef  __cplusplus
+extern "C" {
+#endif
+
 void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *interface, struct vscc_codegen_data *out, bool generate_symbols);
 
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* _VSCC_CODEGEN_H_ */
