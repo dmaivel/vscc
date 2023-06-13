@@ -85,6 +85,16 @@ Lower priority features:
 :warning: partial support
 :heavy_check_mark: full support
 
+### planned
+| Opcode | Description | Destination Operand | Source Operand |
+| --- | ----------- | --- | --- |
+| O_FSTORE | Store floating point value into register | Register | Register/Immediate |
+| O_FLOAD | Load floating point value from memory into register | Register | Register/Immediate |
+| O_FADD | Addition | Register | Register/Immediate |
+| O_FSUB | Subtraction | Register | Register/Immediate |
+| O_FMUL | Multiplication | Register | Register/Immediate |
+| O_FDIV | Division | Register | Register/Immediate |
+
 ### context initialization
 ```c
 struct vscc_context ctx = { 0 };
