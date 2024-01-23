@@ -1,4 +1,6 @@
-# vscc ![license](https://img.shields.io/badge/license-MIT-blue)  <img style="float: right;" src="https://cdn-icons-png.flaticon.com/512/547/547433.png" alt=moon width="48" height="48">
+<img align="right" width="18%" src="https://cdn-icons-png.flaticon.com/512/547/547433.png">
+
+# vscc ![license](https://img.shields.io/badge/license-MIT-blue)
 
 An experimental, lightweight, fast x86-64 compiler backend library, with no dependencies, written in C99, with the ability generate isolated bytecode, compliant with the SYS-V ABI. 
 
