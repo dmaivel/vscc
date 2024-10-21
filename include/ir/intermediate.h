@@ -53,6 +53,7 @@ enum vscc_opcode {
     O_SYSCALL,
     O_SYSCALL_PSHARG,
     O_CALL,
+    O_CALLADDR,
     O_LEA
 };
 

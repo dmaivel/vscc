@@ -404,9 +404,16 @@ static void codegen_jmp(struct vscc_asm_context *asmh, struct vscc_instruction *
 
 static void codegen_call(struct vscc_asm_context *asmh, struct vscc_instruction *instruction)
 {
-    if (vscc_asm_get_label(asmh, instruction->imm1) == NOT_FOUND)
-        vscc_asm_push_fill_in(asmh, instruction->imm1, 1, 5);
-    vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_CALL), ENCODE_I32(vscc_asm_get_offset(asmh, instruction->imm1, 5, false, 0)));
+    if (instruction->opcode == O_CALL) {
+        if (vscc_asm_get_label(asmh, instruction->imm1) == NOT_FOUND)
+            vscc_asm_push_fill_in(asmh, instruction->imm1, 1, 5);
+        vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(ASM_CALL), ENCODE_I32(vscc_asm_get_offset(asmh, instruction->imm1, 5, false, 0)));
+    }
+    else /* if (instruction->opcode == O_CALLADDR) */ {
+        vscc_asm_encode(asmh, REX_W, 2, ENCODE_I8(ASM_MOV_EAX), ENCODE_I64(instruction->imm1));
+        vscc_asm_encode(asmh, REX_NONE, 2, ENCODE_I8(0xFF), ENCODE_I8(0xD0)); // call rax (no relative call b/c runtime address is unknown)
+    }
+    
     if (instruction->reg1 != NULL && ((struct vscc_function*)instruction->imm1)->return_size != 0)
         vscc_x64_ptr_reg(asmh, REX_W, ASM_MOV_DWORD_PTR_REG, MOD_DISP8 | RM_BP | REG_AX, 0x100 - instruction->reg1->stackpos);
     asmh->argc = 0;

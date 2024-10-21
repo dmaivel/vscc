@@ -48,6 +48,7 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         interface->syscallfn,
         interface->pshargfn,
         interface->callfn,
+        interface->callfn,
         interface->leafn,
     };
 
