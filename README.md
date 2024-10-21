@@ -2,7 +2,10 @@
 
 # vscc ![license](https://img.shields.io/badge/license-MIT-blue)
 
-An experimental, lightweight, fast x86-64 compiler backend library, with no dependencies, written in C99, with the ability generate isolated bytecode, compliant with the SYS-V ABI. 
+A lightweight, fast x86-64 compiler backend library.
+  - No third-party dependencies
+  - JIT compilation
+  - SYS-V ABI compliant
 
 ## build (cmake)
 ```bash
