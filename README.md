@@ -84,6 +84,7 @@ Lower priority features:
 | O_SYSCALL | Perform syscall (use vscc_pushs) | | | :heavy_check_mark: |
 | O_SYSCALL_PSHARG | Push an argument for syscall (don't use unless not using vscc_pushs) | Register/Immediate | | :warning: |
 | O_CALL | Call a function | Register (return value storage) | Immediate (pointer to function) | :heavy_check_mark: |
+| O_CALLADDR | Call a function (not IR) by its address | Register (return value storage) | Immediate (pointer to function) | :heavy_check_mark: |
 | O_LEA | Load effective address of register | Register | Register/Immediate | :warning: |
 
 :x: no support
