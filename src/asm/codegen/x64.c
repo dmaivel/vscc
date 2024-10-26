@@ -19,6 +19,17 @@ static const int argc_to_reg[] = {
     REG_CX
 };
 
+static inline void codegen_align_function(struct vscc_asm_context *asmh)
+{
+    size_t current_size = vscc_asm_size(asmh);
+    if (current_size % 16 == 0)
+        return;
+
+    int alignment_length = 16 - (current_size % 16);
+    for (int i = 0; i < alignment_length; i++)
+        vscc_asm_encode(asmh, REX_NONE, 1, ENCODE_I8(0xCC)); /* int3 */
+}
+
 static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     size_t stack_allocation_size = 0;
@@ -63,6 +74,9 @@ static void codegen_function_end(struct vscc_codegen_data *out, struct vscc_asm_
     }
 
     vscc_x64_ret(asmh);
+
+    if (out->align)
+        codegen_align_function(asmh);
 }
 
 /* to-do: globals support */

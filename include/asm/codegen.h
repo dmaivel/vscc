@@ -9,6 +9,7 @@
 struct vscc_codegen_data {
     uint8_t *buffer;
     size_t length;
+    bool align;
 
     struct vscc_symbol *symbols;
 };

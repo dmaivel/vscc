@@ -156,6 +156,10 @@ status = vscc_ir_load(&ctx, "/path/to/save.vscc");
 struct vscc_codegen_data compiled = { 0 }; 
 struct vscc_codegen_interface interface = { 0 };
 ```
+### enable alignment
+```c
+compiled.align = true; /* compiled is of type 'struct vscc_codegen_data' */
+```
 ### compile context
 ```c
 vscc_codegen_implement_x64(&interface, ABI_SYSV);
