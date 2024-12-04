@@ -30,7 +30,7 @@ static inline void codegen_align_function(struct vscc_asm_context *asmh)
         vscc_asm_encode(asmh, REX_NONE, 1, ENCODE_I8(0xCC)); /* int3 */
 }
 
-static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
+static void codegen_function_prologue(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     size_t stack_allocation_size = 0;
     if (likely(function->register_stream != NULL)) {
@@ -66,7 +66,7 @@ static void codegen_function_start(struct vscc_codegen_data *out, struct vscc_as
     asmh->scratch[0] = stack_allocation_size;
 }
 
-static void codegen_function_end(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
+static void codegen_function_epilogue(struct vscc_codegen_data *out, struct vscc_asm_context *asmh, struct vscc_function *function, bool generate_symbols)
 {
     if (likely(function->register_stream != NULL)) {
         vscc_asm_encode(asmh, REX_W, 3, ENCODE_I8(ASM_ARITH_DWORD_PTR_IMM), ENCODE_I8(MOD_RM | RM_SP), ENCODE_I8(asmh->scratch[0])); /* add rsp, ... */
@@ -439,8 +439,8 @@ void vscc_codegen_implement_x64(struct vscc_codegen_interface *interface, enum v
         assert(false && "only sys-v abi currently supported");
 
     *interface = (struct vscc_codegen_interface) {
-        .startfn = codegen_function_start,
-        .endfn = codegen_function_end,
+        .prologuefn = codegen_function_prologue,
+        .epiloguefn = codegen_function_epilogue,
 
         .addfn = codegen_arith,
         .loadfn = codegen_load,

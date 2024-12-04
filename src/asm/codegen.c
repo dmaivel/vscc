@@ -68,7 +68,7 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         vscc_asm_fill_ins(&assembler, (size_t)function);
 
         /* startup */
-        interface->startfn(out, &assembler, function, generate_symbols);
+        interface->prologuefn(out, &assembler, function, generate_symbols);
 
         /* instruction translation */
         for (struct vscc_instruction *instruction = function->instruction_stream; instruction; instruction = instruction->next) {
@@ -91,7 +91,7 @@ void vscc_codegen(struct vscc_context *context, struct vscc_codegen_interface *i
         vscc_asm_push_label(&assembler, DECLABEL_END_FUNCTION, vscc_asm_size(&assembler), false);
         vscc_asm_fill_ins(&assembler, DECLABEL_END_FUNCTION);
 
-        interface->endfn(out, &assembler, function, generate_symbols);
+        interface->epiloguefn(out, &assembler, function, generate_symbols);
 
         vscc_list_free_element((void**)&assembler.label_map, 0, equals_label, NULL);
     }

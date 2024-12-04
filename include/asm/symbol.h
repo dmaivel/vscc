@@ -17,6 +17,7 @@ struct vscc_symbol {
     char symbol_name[MAX_SYMBOL_LEN];
 
     enum vscc_symbol_type type;
+    void *symbol_for;
 
     /* absolute offset for functions & global variables, relative stack offset for local/param variables */
     uintptr_t offset;

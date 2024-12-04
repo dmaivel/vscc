@@ -136,21 +136,21 @@ int main()
     memcpy(exe, compiled.buffer, compiled.length);
 
     /* get specific function from executable */
-    strlen_t my_strlen_fn = (strlen_t)(exe + get_offset_from_symbol(compiled.symbols, "strlen<i64>()"));
+    strlen_t my_strlen_fn = (strlen_t)(exe + get_offset_from_symbol(compiled.symbols, "strlen"));
 
     /* map string into executable memory and call specific function */
     char *message = "Hello, world!\n";
-    memcpy(exe + get_offset_from_symbol(compiled.symbols, "my_message<15b, globl>"), message, my_strlen_fn(message));
+    memcpy(exe + get_offset_from_symbol(compiled.symbols, "my_message"), message, my_strlen_fn(message));
 
     /* run executable */
     printf("program result: %d\n", ((int(*)())exe)());
 
     /* call another specific function from executable */
-    print_t my_print_fn = (print_t)(exe + get_offset_from_symbol(compiled.symbols, "print<i64>()"));
+    print_t my_print_fn = (print_t)(exe + get_offset_from_symbol(compiled.symbols, "print"));
     my_print_fn("Hello from the main main!\n");
 
     /* value of */
-    printf("my_test_var = %ld\n", *(size_t*)(exe + get_offset_from_symbol(compiled.symbols, "test_var<i64, globl>")));
+    printf("my_test_var = %ld\n", *(size_t*)(exe + get_offset_from_symbol(compiled.symbols, "test_var")));
 
     /* free executable */
     munmap(exe, compiled.length);

@@ -18,8 +18,8 @@ typedef void(*vscc_codegen_fnsetup)(struct vscc_codegen_data *out, struct vscc_a
 typedef void(*vscc_codegen_impl)(struct vscc_asm_context *asmh, struct vscc_instruction *instruction);
 
 struct vscc_codegen_interface {
-    vscc_codegen_fnsetup startfn;
-    vscc_codegen_fnsetup endfn;
+    vscc_codegen_fnsetup prologuefn;
+    vscc_codegen_fnsetup epiloguefn;
 
     vscc_codegen_impl addfn;
     vscc_codegen_impl loadfn;
